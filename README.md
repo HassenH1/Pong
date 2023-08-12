@@ -15,4 +15,4 @@
 
 [pong-screenshot]: images/pong.png
 
-[pong-screenshot]
+![pong-screenshot]
