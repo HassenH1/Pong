@@ -43,36 +43,42 @@ btn.addEventListener("click", () => {
   outerDiv.style.display = "none";
   document.getElementById("myCanvas").style.display = "";
 
-  var canvas = document.getElementById("myCanvas");
-  var ctx = canvas.getContext("2d");
-  var ballRadius = 10;
-  var x = canvas.width / 2;
-  var y = canvas.height - 30;
-  var dx = 2;
-  var dy = -2;
-  var paddleHeight = 10;
-  var paddleWidth = 75;
-  var paddleX = (canvas.width - paddleWidth) / 2;
-  var paddleXComp = (canvas.width - paddleWidth) / 2;
-  var rightPressed = false;
-  var leftPressed = false;
-  var ballColor = "black";
+  let canvas = document.getElementById("myCanvas");
+  let ctx = canvas.getContext("2d");
+  const KEY = {
+    RIGHT: "Right",
+    ARROWRIGHT: "ArrowRight",
+    LEFT: "Left",
+    ARROWLEFT: "ArrowLeft",
+  };
+  const ballRadius = 10;
+  let x = canvas.width / 2;
+  let y = canvas.height / 2;
+  let dx = Math.random() < 0.5 ? -2 : 2;
+  let dy = Math.random() < 0.5 ? -2 : 2;
+  let paddleHeight = 10;
+  let paddleWidth = 75;
+  let paddleX = (canvas.width - paddleWidth) / 2;
+  let paddleXComp = (canvas.width - paddleWidth) / 2;
+  let rightPressed = false;
+  let leftPressed = false;
+  let ballColor = "black";
 
   document.addEventListener("keydown", keyDownHandler, false);
   document.addEventListener("keyup", keyUpHandler, false);
 
   function keyDownHandler(e) {
-    if (e.key == "Right" || e.key == "ArrowRight") {
+    if (e.key == KEY.RIGHT || e.key == KEY.ARROWRIGHT) {
       rightPressed = true;
-    } else if (e.key == "Left" || e.key == "ArrowLeft") {
+    } else if (e.key == KEY.LEFT || e.key == KEY.ARROWLEFT) {
       leftPressed = true;
     }
   }
 
   function keyUpHandler(e) {
-    if (e.key == "Right" || e.key == "ArrowRight") {
+    if (e.key == KEY.RIGHT || e.key == KEY.ARROWRIGHT) {
       rightPressed = false;
-    } else if (e.key == "Left" || e.key == "ArrowLeft") {
+    } else if (e.key == KEY.LEFT || e.key == KEY.ARROWLEFT) {
       leftPressed = false;
     }
   }
@@ -84,17 +90,11 @@ btn.addEventListener("click", () => {
     ctx.fill();
     ctx.closePath();
   }
-  function drawPaddle() {
+
+  function drawPaddle(x, y, w, h, fillStyle) {
     ctx.beginPath();
-    ctx.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
-    ctx.fillStyle = "#0095DD";
-    ctx.fill();
-    ctx.closePath();
-  }
-  function drawPaddleComp() {
-    ctx.beginPath();
-    ctx.rect(paddleXComp, 0, paddleWidth, paddleHeight);
-    ctx.fillStyle = "red";
+    ctx.rect(x, y, w, h);
+    ctx.fillStyle = fillStyle;
     ctx.fill();
     ctx.closePath();
   }
@@ -107,48 +107,70 @@ btn.addEventListener("click", () => {
     ctx.stroke();
   }
 
-  function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawBall();
-    drawPaddle();
-    drawPaddleComp();
-    drawDashedLines();
-
+  function computerPaddleFakeAI() {
     if (x + dx > paddleXComp + paddleWidth) {
       paddleXComp += 2;
     } else if (x + dx < paddleXComp) {
       paddleXComp -= 2;
     }
+  }
 
+  function collisionDetection() {
+    const bounceBackVel = 0.124;
+    const red = "red";
+    const blue = "#0095DD";
+    // width detection
     if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
       dx = -dx;
     }
+
+    // height detection
     if (y + dy < ballRadius) {
       if (x > paddleXComp && x < paddleXComp + paddleWidth) {
-        ballColor = "red";
-        dy = -dy + 0.124;
+        ballColor = red;
+        dy = -dy + bounceBackVel;
       } else {
         document.location.reload();
         clearInterval(interval); // Needed for Chrome to end game
       }
     } else if (y + dy > canvas.height - ballRadius) {
       if (x > paddleX && x < paddleX + paddleWidth) {
-        ballColor = "#0095DD";
-        dy = -dy - 0.124;
+        ballColor = blue;
+        dy = -dy - bounceBackVel;
       } else {
         document.location.reload();
         clearInterval(interval); // Needed for Chrome to end game
       }
     }
 
-    if (rightPressed && paddleX < canvas.width - paddleWidth) {
-      paddleX += 7;
-    } else if (leftPressed && paddleX > 0) {
-      paddleX -= 7;
-    }
-
     x += dx;
     y += dy;
+  }
+
+  function playerPaddleSpeed() {
+    const paddleSpeed = 7;
+    if (rightPressed && paddleX < canvas.width - paddleWidth) {
+      paddleX += paddleSpeed;
+    } else if (leftPressed && paddleX > 0) {
+      paddleX -= paddleSpeed;
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawBall();
+    drawPaddle(
+      paddleX,
+      canvas.height - paddleHeight,
+      paddleWidth,
+      paddleHeight,
+      "#0095DD"
+    ); // user paddle
+    drawPaddle(paddleXComp, 0, paddleWidth, paddleHeight, "red"); // computer paddle
+    drawDashedLines();
+    computerPaddleFakeAI();
+    collisionDetection();
+    playerPaddleSpeed();
   }
 
   var interval = setInterval(draw, 10);
